@@ -1,16 +1,16 @@
-name: Deploy Flask App
+name: Deploy Flask App to Local Machine
 
 on:
   push:
     branches:
-      - main
+      - main  # or your preferred branch
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
+    - name: Checkout repository
       uses: actions/checkout@v3
 
     - name: Set up SSH
@@ -18,17 +18,17 @@ jobs:
         mkdir -p ~/.ssh
         echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H your_server_ip >> ~/.ssh/known_hosts
+        ssh-keyscan -H 49.43.217.200 >> ~/.ssh/known_hosts
 
     - name: Copy app files to server
       run: |
-        rsync -avz --exclude '.git*' ./ ubuntu@your_server_ip:/home/ubuntu/flask-app
+        rsync -avz --exclude '.git*' ./ ubuntu@49.43.217.200:/home/ubuntu/flask-app
 
     - name: Start Flask app on remote server
       run: |
-        ssh ubuntu@your_server_ip << 'EOF'
+        ssh ubuntu@49.43.217.200 << 'EOF'
           cd flask-app
-          pip3 install -r requirements.txt
+          pip3 install -r requirements.txt || true
           pkill -f app.py || true
           nohup python3 app.py > output.log 2>&1 &
         EOF
