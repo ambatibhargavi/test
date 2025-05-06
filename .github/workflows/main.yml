@@ -1,34 +1,35 @@
-name: Deploy Flask App to Local Machine
+name: Flask CI
 
 on:
   push:
     branches:
-      - main  # or your preferred branch
+      - main  # Change to your default branch if different
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
+    - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Set up SSH
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H 49.43.217.200 >> ~/.ssh/known_hosts
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'  # Or whatever version you prefer
 
-    - name: Copy app files to server
+    - name: Install dependencies
       run: |
-        rsync -avz --exclude '.git*' ./ ubuntu@49.43.217.200:/home/ubuntu/flask-app
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
 
-    - name: Start Flask app on remote server
+    - name: Run Flask app (for testing only)
       run: |
-        ssh ubuntu@49.43.217.200 << 'EOF'
-          cd flask-app
-          pip3 install -r requirements.txt || true
-          pkill -f app.py || true
-          nohup python3 app.py > output.log 2>&1 &
-        EOF
+        export FLASK_APP=app.py
+        export FLASK_ENV=development
+        flask run --host=0.0.0.0 --port=5000 &
+        sleep 5
+        curl http://localhost:5000
+
+    - name: Finish
+      run: echo "Flask app ran successfully!"
